@@ -25,7 +25,9 @@ io.sockets.on('connection', function(socket) {
     socket.broadcast.emit('message', message);
     console.log('message: ', message);  
   });
-
+  socket.on('camera join', function(room) {
+    console.log('A camera has joined to room: ' + room);
+  }); 
   socket.on('create or join', function(room) {
     console.log('create or join: ', room);  
     log('Received request to create or join room ' + room);
@@ -33,7 +35,8 @@ io.sockets.on('connection', function(socket) {
     var clientsInRoom = io.sockets.adapter.rooms[room];
     var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
     log('Room ' + room + ' now has ' + numClients + ' client(s)');
-
+    
+	  /*
     if (numClients === 0) {
       socket.join(room);
       log('Client ID ' + socket.id + ' created room ' + room);
@@ -47,7 +50,7 @@ io.sockets.on('connection', function(socket) {
       io.sockets.in(room).emit('ready');
     } else { // max two clients
       socket.emit('full', room);
-    }
+    }*/
   });
 
   socket.on('ipaddr', function() {
