@@ -47,6 +47,11 @@ socket.on('camera ready', () => {
   isInitiator = true;
   maybeStart();  
 });
+socket.on('answer', function(n, sdp) {
+  console.log('set remote');
+  // replace pc to pcList[n] later.
+  pc.setRemoteDescription(new RTCSessionDescription(sdp));
+});
 socket.on('created', function(room) {
   console.log('Created room ' + room);
   isInitiator = true;
@@ -195,7 +200,10 @@ function handleIceCandidate2(event) {
       sessionDescription.sdp += 'a=' + ice_candidates[i] + '\r\n';
     }
     pc.setLocalDescription(sessionDescription);
-    sendMessage(sessionDescription);
+    //sendMessage(sessionDescription);
+    const n = 0; // the order of player
+    const m = 0; // the order of stream
+    socket.emit('offer', (n, m, sessionDescription));
   }
 }
 function handleIceCandidate(event) {
