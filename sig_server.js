@@ -27,11 +27,30 @@ io.sockets.on('connection', function(socket) {
   });
   socket.on('camera join', function(room) {
     console.log('A camera has joined to room: ' + room);
+    socket.join(room);
+    if (!(io.sockets.adapter.rooms[room].cams)) {
+      // if there is no cams then make subset of cams.
+      io.sockets.adapter.rooms[room].cams = [];
+    }
+    // else push the camera's id to the cams 
+    io.sockets.adapter.rooms[room].cams.push(socket.id);
   }); 
+  socket.on('client join', function(room) {
+    console.log('a client has joined to room ' + room);
+    socket.join(room);
+    console.log(io.sockets.adapter.rooms[room]);
+    if (!(io.sockets.adapter.rooms[room].clients)) {
+      io.sockets.adapter.rooms[room].clients = [];
+    }
+    io.sockets.adapter.rooms[room].clients.push(socket.id);
+    console.log('camera check and converter check');
+  });
+
   socket.on('create or join', function(room) {
     console.log('create or join: ', room);  
     log('Received request to create or join room ' + room);
-
+    socket.join(room);
+    
     var clientsInRoom = io.sockets.adapter.rooms[room];
     var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
     log('Room ' + room + ' now has ' + numClients + ' client(s)');
