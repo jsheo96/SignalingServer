@@ -28,24 +28,27 @@ io.sockets.on('connection', function(socket) {
   socket.on('camera join', function(room) {
     console.log('A camera has joined to room: ' + room);
     socket.join(room);
-    if (!(io.sockets.adapter.rooms[room].cams)) {
-      // if there is no cams then make subset of cams.
-      io.sockets.adapter.rooms[room].cams = [];
-    }
-    // else push the camera's id to the cams 
-    io.sockets.adapter.rooms[room].cams.push(socket.id);
+    io.sockets.adapter.rooms[room].camera = socket.id;
+    socket.broadcast.emit('camera ready');
   }); 
   socket.on('client join', function(room) {
     console.log('a client has joined to room ' + room);
     socket.join(room);
-    console.log(io.sockets.adapter.rooms[room]);
-    if (!(io.sockets.adapter.rooms[room].clients)) {
-      io.sockets.adapter.rooms[room].clients = [];
+    if (io.sockets.adapter.rooms[room].camera) {
+      io.to(socket.id).emit('camera ready');
     }
-    io.sockets.adapter.rooms[room].clients.push(socket.id);
-    console.log('camera check and converter check');
   });
-
+  socket.on('offer', function (n, m, sdp) {
+    const cameraId = io.sockets.adapter.rooms[room].camera;
+    // prepare in case of no camera
+    console.log('a client has sent an offer to camera ' + cameraId);
+    io.to(cameraId).emit('offer', (socketId, n, m, sdp));
+  });
+  socket.on('answer', function (socketId, n, sdp) {
+    console.log('a camera has sent an answer to client ' + socketId);
+    io.to(socketId).emit('answer', (n, sdp));
+  });
+  /*
   socket.on('create or join', function(room) {
     console.log('create or join: ', room);  
     log('Received request to create or join room ' + room);
@@ -54,8 +57,6 @@ io.sockets.on('connection', function(socket) {
     var clientsInRoom = io.sockets.adapter.rooms[room];
     var numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
     log('Room ' + room + ' now has ' + numClients + ' client(s)');
-    
-	  /*
     if (numClients === 0) {
       socket.join(room);
       log('Client ID ' + socket.id + ' created room ' + room);
@@ -69,8 +70,8 @@ io.sockets.on('connection', function(socket) {
       io.sockets.in(room).emit('ready');
     } else { // max two clients
       socket.emit('full', room);
-    }*/
-  });
+    }
+  });*/
 
   socket.on('ipaddr', function() {
     var ifaces = os.networkInterfaces();

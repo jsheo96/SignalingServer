@@ -42,7 +42,11 @@ if (room !== '') {
   socket.emit('client join', room);
   console.log('Attempted to join room', room);
 }
-
+socket.on('camera ready', () => {
+  isChannelReady = true;
+  isInitiator = true;
+  maybeStart();  
+});
 socket.on('created', function(room) {
   console.log('Created room ' + room);
   isInitiator = true;
