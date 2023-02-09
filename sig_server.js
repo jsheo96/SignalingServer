@@ -18,9 +18,12 @@ io.sockets.on('connection', function(socket) {
     array.push.apply(array, arguments);
     socket.emit('log', array);
   }
-  function findRoomFromSocketId(socketId) {
-    return Object.keys(io.sockets.adapter.rooms).find(key=>socketId in io.sockets.adapter.rooms[key]);
+  function findRoomsFromSocketId(socketId) {
+    let rooms = Array.from(io.sockets.adapter.sids[socketId]);
+    rooms = rooms.filter(room => room !== socketId);
+    return rooms
   }
+
 
   socket.on('message', function(message) {
     log('Client said: ', message);
@@ -33,6 +36,7 @@ io.sockets.on('connection', function(socket) {
     socket.join(room);
     io.sockets.adapter.rooms[room].camera = socket.id;
     io.sockets.in(room).emit('camera ready');
+    console.log('Current Room State: ' + io.sockets.adapter.rooms);
   }); 
   socket.on('client join', function(room) {
     console.log('a client has joined to room ' + room);
@@ -40,6 +44,8 @@ io.sockets.on('connection', function(socket) {
     if (io.sockets.adapter.rooms[room].camera) {
       io.to(socket.id).emit('camera ready');
     }
+    console.log('Current Room State: ' + io.sockets.adapter.rooms);
+
   });
   socket.on('offer', function (params) {
     const n = params[0];
@@ -68,14 +74,26 @@ io.sockets.on('connection', function(socket) {
     io.to(socketId).emit('answer', [n, sdp]);
   });
   socket.on('bye', ()=> {
-    const room = findRoomFromSocketId(socket.id);
-    if (socket.id == io.sockets.adapter.rooms[room].camera) {
+    const rooms = findRoomsFromSocketId(socket.id);
+    var cameras = [];
+    for (let room in rooms) {
+      console.log('rooms', rooms);
+      console.log('room', room);
+      camera = io.sockets.adapter.rooms[room].camera
+      if (camera) {
+	cameras.push(camera);
+      }
+    }
+    if (socket.id in cameras) {
       console.log('received by from camera');
       io.socket.in(room).emit('bye');
     } else {
-      console.log('received by from client');
-      io.to(io.sockets.adapter.rooms[room].camera).emit('bye from a client ', socket.id); // does not do anything
+      for (let room in rooms) {
+        console.log('received by from client');
+        io.to(io.sockets.adapter.rooms[room].camera).emit('bye', socket.id); // does not do anything
+      }
     }
+    console.log('Current Room State: ' + io.sockets.adapter.rooms);
   });
   /*
   socket.on('create or join', function(room) {

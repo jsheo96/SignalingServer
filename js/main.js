@@ -54,6 +54,9 @@ socket.on('answer', function(params) {
   // replace pc to pcList[n] later.
   pc.setRemoteDescription(new RTCSessionDescription(sdp));
 });
+socket.on('bye', () => {
+  handleRemoteHangup();
+});
 socket.on('created', function(room) {
   console.log('Created room ' + room);
   isInitiator = true;
