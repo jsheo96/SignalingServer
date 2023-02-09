@@ -47,7 +47,9 @@ socket.on('camera ready', () => {
   isInitiator = true;
   maybeStart();  
 });
-socket.on('answer', function(n, sdp) {
+socket.on('answer', function(params) {
+  const n = params[0];
+  const sdp = params[1];
   console.log('set remote');
   // replace pc to pcList[n] later.
   pc.setRemoteDescription(new RTCSessionDescription(sdp));
@@ -203,7 +205,7 @@ function handleIceCandidate2(event) {
     //sendMessage(sessionDescription);
     const n = 0; // the order of player
     const m = 0; // the order of stream
-    socket.emit('offer', (n, m, sessionDescription));
+    socket.emit('offer', [n, m, sessionDescription]);
   }
 }
 function handleIceCandidate(event) {

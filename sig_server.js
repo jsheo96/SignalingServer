@@ -29,7 +29,7 @@ io.sockets.on('connection', function(socket) {
     console.log('A camera has joined to room: ' + room);
     socket.join(room);
     io.sockets.adapter.rooms[room].camera = socket.id;
-    socket.broadcast.emit('camera ready');
+    io.sockets.in(room).emit('camera ready');
   }); 
   socket.on('client join', function(room) {
     console.log('a client has joined to room ' + room);
@@ -38,15 +38,30 @@ io.sockets.on('connection', function(socket) {
       io.to(socket.id).emit('camera ready');
     }
   });
-  socket.on('offer', function (n, m, sdp) {
-    const cameraId = io.sockets.adapter.rooms[room].camera;
+  socket.on('offer', function (params) {
+    const n = params[0];
+    const m = params[1];
+    const sdp = params[2];
+    // const cameraId = io.sockets.adapter.rooms[room].camera;
     // prepare in case of no camera
-    console.log('a client has sent an offer to camera ' + cameraId);
-    io.to(cameraId).emit('offer', (socketId, n, m, sdp));
+    // console.log('a client has sent an offer to camera ' + cameraId);
+    // find camera and emit to it
+    console.log('offer parameters', n, m, sdp);
+    for (let room in io.sockets.adapter.rooms) {
+      if (socket.id in io.sockets.adapter.rooms[room].sockets) {
+	console.log('a client has sent an offer to camera ' + io.sockets.adapter.rooms[room].camera);
+	console.log('sdp in sig server', sdp);
+	io.sockets.in(room).emit('offer', [socket.id, n, m, sdp]);
+	break;
+      }
+    }
   });
-  socket.on('answer', function (socketId, n, sdp) {
+  socket.on('answer', function (params) {
+    const socketId = params[0];
+    const n = params[1];
+    const sdp = params[2];
     console.log('a camera has sent an answer to client ' + socketId);
-    io.to(socketId).emit('answer', (n, sdp));
+    io.to(socketId).emit('answer', [n, sdp]);
   });
   /*
   socket.on('create or join', function(room) {
