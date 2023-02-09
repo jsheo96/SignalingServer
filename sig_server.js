@@ -18,6 +18,9 @@ io.sockets.on('connection', function(socket) {
     array.push.apply(array, arguments);
     socket.emit('log', array);
   }
+  function findRoomFromSocketId(socketId) {
+    return Object.keys(io.sockets.adapter.rooms).find(key=>socketId in io.sockets.adapter.rooms[key]);
+  }
 
   socket.on('message', function(message) {
     log('Client said: ', message);
@@ -61,7 +64,18 @@ io.sockets.on('connection', function(socket) {
     const n = params[1];
     const sdp = params[2];
     console.log('a camera has sent an answer to client ' + socketId);
+    console.log('answer n sdp ', n , sdp);
     io.to(socketId).emit('answer', [n, sdp]);
+  });
+  socket.on('bye', ()=> {
+    const room = findRoomFromSocketId(socket.id);
+    if (socket.id == io.sockets.adapter.rooms[room].camera) {
+      console.log('received by from camera');
+      io.socket.in(room).emit('bye');
+    } else {
+      console.log('received by from client');
+      io.to(io.sockets.adapter.rooms[room].camera).emit('bye from a client ', socket.id); // does not do anything
+    }
   });
   /*
   socket.on('create or join', function(room) {

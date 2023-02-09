@@ -170,7 +170,8 @@ function maybeStart() {
 }
 
 window.onbeforeunload = function() {
-  sendMessage('bye');
+  socket.emit('bye'); 
+  //sendMessage('bye');
 };
 
 /////////////////////////////////////////////////////////
