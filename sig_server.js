@@ -19,7 +19,7 @@ io.sockets.on('connection', function(socket) {
     socket.emit('log', array);
   }
   function findRoomsFromSocketId(socketId) {
-    let rooms = Array.from(io.sockets.adapter.sids[socketId]);
+    let rooms = Array.from(Object.keys(io.sockets.adapter.sids[socketId]));
     rooms = rooms.filter(room => room !== socketId);
     return rooms
   }
@@ -36,7 +36,7 @@ io.sockets.on('connection', function(socket) {
     socket.join(room);
     io.sockets.adapter.rooms[room].camera = socket.id;
     io.sockets.in(room).emit('camera ready');
-    console.log('Current Room State: ' + io.sockets.adapter.rooms);
+    console.log('Current Room State: ',io.sockets.adapter.rooms);
   }); 
   socket.on('client join', function(room) {
     console.log('a client has joined to room ' + room);
@@ -44,22 +44,19 @@ io.sockets.on('connection', function(socket) {
     if (io.sockets.adapter.rooms[room].camera) {
       io.to(socket.id).emit('camera ready');
     }
-    console.log('Current Room State: ' + io.sockets.adapter.rooms);
+    console.log('Current Room State: ', io.sockets.adapter.rooms);
 
   });
   socket.on('offer', function (params) {
     const n = params[0];
     const m = params[1];
     const sdp = params[2];
-    // const cameraId = io.sockets.adapter.rooms[room].camera;
-    // prepare in case of no camera
-    // console.log('a client has sent an offer to camera ' + cameraId);
-    // find camera and emit to it
-    console.log('offer parameters', n, m, sdp);
-    for (let room in io.sockets.adapter.rooms) {
+    console.log('recieved offer');
+    const rooms = findRoomsFromSocketId(socket.id);
+    for (let i=0;i<rooms.length;i++) {
+      var room = rooms[i]
       if (socket.id in io.sockets.adapter.rooms[room].sockets) {
-	console.log('a client has sent an offer to camera ' + io.sockets.adapter.rooms[room].camera);
-	console.log('sdp in sig server', sdp);
+	console.log('emit offer to camera in room', room);
 	io.sockets.in(room).emit('offer', [socket.id, n, m, sdp]);
 	break;
       }
@@ -69,31 +66,29 @@ io.sockets.on('connection', function(socket) {
     const socketId = params[0];
     const n = params[1];
     const sdp = params[2];
-    console.log('a camera has sent an answer to client ' + socketId);
-    console.log('answer n sdp ', n , sdp);
+    console.log('received answer');
     io.to(socketId).emit('answer', [n, sdp]);
   });
   socket.on('bye', ()=> {
     const rooms = findRoomsFromSocketId(socket.id);
     var cameras = [];
-    for (let room in rooms) {
-      console.log('rooms', rooms);
-      console.log('room', room);
-      camera = io.sockets.adapter.rooms[room].camera
+    for (let i=0;i<rooms.length;i++) {
+      var room = rooms[i];
+      var camera = io.sockets.adapter.rooms[room].camera
       if (camera) {
 	cameras.push(camera);
       }
     }
+    console.log('rooms:',rooms);
     if (socket.id in cameras) {
-      console.log('received by from camera');
+      console.log('received bye from camera');
       io.socket.in(room).emit('bye');
     } else {
-      for (let room in rooms) {
-        console.log('received by from client');
-        io.to(io.sockets.adapter.rooms[room].camera).emit('bye', socket.id); // does not do anything
-      }
+      console.log('received bye from client');
+      // do nothing to the RTSPtoWeb. hope it processes discconnection well.
     }
-    console.log('Current Room State: ' + io.sockets.adapter.rooms);
+    console.log('Current Sids State: ', io.sockets.adapter.sids);
+    console.log('Current Room State: ', io.sockets.adapter.rooms);
   });
   /*
   socket.on('create or join', function(room) {
@@ -130,9 +125,4 @@ io.sockets.on('connection', function(socket) {
       });
     }
   });
-
-  socket.on('bye', function(){
-    console.log('received bye');
-  });
-
 });
