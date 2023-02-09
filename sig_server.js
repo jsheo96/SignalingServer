@@ -75,6 +75,18 @@ io.sockets.on('connection', function(socket) {
     console.log('Current Sids State: ', io.sockets.adapter.sids);
     console.log('Current Room State: ', io.sockets.adapter.rooms);
   });
+  socket.on('disconnecting', () => {
+    for (let room in socket.rooms) {
+      // When camera is disconnected then discard the camera in the room
+      if (socket.id === io.sockets.adapter.rooms[room].camera) {
+        io.sockets.adapter.rooms[room].camera = undefined;
+      }
+    }
+  });
+  socket.on('disconnect', (reason) => {
+    console.log('A socket has been disconnected:', reason);
+    console.log('Current Room State: ', io.sockets.adapter.rooms);
+  });
   socket.on('ipaddr', function() {
     var ifaces = os.networkInterfaces();
     for (var dev in ifaces) {

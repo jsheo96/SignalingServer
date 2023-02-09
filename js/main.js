@@ -43,6 +43,7 @@ if (room !== '') {
   console.log('Attempted to join room', room);
 }
 socket.on('camera ready', () => {
+  console.log('received camera ready');
   isChannelReady = true;
   isInitiator = true;
   maybeStart();  
