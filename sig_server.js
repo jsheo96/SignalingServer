@@ -2,13 +2,21 @@
 
 var os = require('os');
 var nodeStatic = require('node-static');
+var https = require('https');
+const fs = require('fs');
 var http = require('http');
 var socketIO = require('socket.io');
 var fileServer = new(nodeStatic.Server)();
-var app = http.createServer(function(req, res) {
-  fileServer.serve(req, res);
-}).listen(8080);
+// var app = http.createServer(function(req, res) {
+//  fileServer.serve(req, res);
+// }).listen(8080);
 
+const options = {
+  ca: fs.readFileSync('/etc/letsencrypt/live/fishscope.tidepool.kr/fullchain.pem'),
+  key: fs.readFileSync('/etc/letsencrypt/live/fishscope.tidepool.kr/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/fishscope.tidepool.kr/cert.pem')
+};
+https.createServer(options, app).listen(8080);
 var io = socketIO.listen(app);
 io.sockets.on('connection', function(socket) {
   function findRoomsFromSocketId(socketId) {
